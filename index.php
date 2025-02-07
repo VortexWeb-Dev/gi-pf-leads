@@ -212,8 +212,8 @@ class LeadProcessor
 
 // Usage
 $processor = new LeadProcessor(__DIR__ . '/auth_token.json', __DIR__ . '/processed_leads.txt');
-$leads = $processor->fetchAllLeads('2025-02-05');
+$leads = $processor->fetchAllLeads('Y-m-d');
 
-// $processor->processLeads($leads['whatsapp'], 'WHATSAPP', 'PF_WHATSAPP');
-// $processor->processLeads($leads['email'], 'EMAIL', 'PF_EMAIL');
+$processor->processLeads($leads['whatsapp'], 'WHATSAPP', 'PF_WHATSAPP');
+$processor->processLeads($leads['email'], 'EMAIL', 'PF_EMAIL');
 $processor->processLeads($leads['call'], 'CALL', 'PF_CALL');
