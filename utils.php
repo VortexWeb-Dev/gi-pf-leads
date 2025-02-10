@@ -171,8 +171,35 @@ function getProcessedLeads($file)
 
 function saveProcessedLead($file, $lead_id)
 {
-    file_put_contents($file, $lead_id . PHP_EOL, FILE_APPEND);
+    // Check if the file is writable
+    if (!is_writable($file)) {
+        echo "Error: The file '{$file}' is not writable. Check file permissions.\n";
+        return;
+    }
+
+    // Try writing to the file
+    $result = file_put_contents($file, $lead_id . PHP_EOL, FILE_APPEND);
+
+    if ($result === false) {
+        echo "Error: Failed to write Lead ID {$lead_id} to '{$file}'. Check disk space, file path, and permissions.\n";
+    } else {
+        echo "Success: Lead ID {$lead_id} saved successfully.\n";
+    }
+
+    // Verify by reading the file to confirm the lead_id was saved
+    if (!is_readable($file)) {
+        echo "Error: The file '{$file}' is not readable. Check file permissions.\n";
+        return;
+    }
+
+    $contents = file_get_contents($file);
+    if (strpos($contents, $lead_id) !== false) {
+        echo "Verification successful: Lead ID {$lead_id} found in the file.\n";
+    } else {
+        echo "Verification failed: Lead ID {$lead_id} not found in the file.\n";
+    }
 }
+
 
 function determineAgentId($agent_email)
 {
