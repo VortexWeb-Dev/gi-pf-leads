@@ -42,9 +42,9 @@ class LeadProcessor
     {
         $encodedTimestamp = urlencode($timestamp);
         return [
-            'email' => fetchLeads('leads', $encodedTimestamp, $this->authToken)['leads'],
             'whatsapp' => fetchLeads('whatsapp-leads', $encodedTimestamp, $this->authToken)['whatsapp'],
             'call' => fetchLeads('calltrackings', $encodedTimestamp, $this->authToken)['call_trackings']
+            // 'email' => fetchLeads('leads', $encodedTimestamp, $this->authToken)['leads'],
         ];
     }
 
@@ -212,8 +212,10 @@ class LeadProcessor
 
 // Usage
 $processor = new LeadProcessor(__DIR__ . '/auth_token.json', __DIR__ . '/processed_leads.txt');
-$leads = $processor->fetchAllLeads(date('Y-m-d'));
+$date = date('Y-m-d');
+var_dump($date);
+$leads = $processor->fetchAllLeads($date);
 
 $processor->processLeads($leads['whatsapp'], 'WHATSAPP', 'PF_WHATSAPP');
-$processor->processLeads($leads['email'], 'EMAIL', 'PF_EMAIL');
 $processor->processLeads($leads['call'], 'CALL', 'PF_CALL');
+// $processor->processLeads($leads['email'], 'EMAIL', 'PF_EMAIL');
