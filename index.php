@@ -66,23 +66,24 @@ class LeadProcessor
 
     private function prepareLeadFields(array $leadData, string $mode, string $collectionSource): array
     {
-        $assignedAgentId = determineAgentId($leadData['agent_email']) ?? 1893;
+        if($leadData['property_reference']) {
+            $assignedAgentId = getResponsiblePerson($leadData['property_reference'], 'reference') ?? 1893;
+        } else {
+            $assignedAgentId = getResponsiblePerson($leadData['agent_phone'], 'call') ?? 1893;
+        }
 
         return [
-            'TITLE' => "Property Finder $mode - {$leadData['property_reference']}",
-            'ufCrm43_1738827952373' => MODE_OF_ENQUIRY[$mode],
-            'ufCrm43_1738828095478' => COLLECTION_SOURCE[$collectionSource],
-            'ufCrm43_1738828416520' => $leadData['property_reference'],
-            'ufCrm43_1738828919345' => $leadData['client_name'],
-            'ufCrm43_1738828974042' => $leadData['client_email'],
-            'ufCrm43_1738828948789' => $leadData['client_phone'],
-            'ufCrm43_1738828518085' => $leadData['enquiry_datetime'],
-            'sourceId' => PF_SOURCE_ID,
-            'assignedById' => $assignedAgentId
+            'TITLE' => "Property Finder - " . ucfirst(strtolower($mode)) . " - " . $leadData['property_reference'],
+            'UF_CRM_1680511307544' => $leadData['property_reference'],
+            'UF_CRM_1701770331658' => $leadData['client_name'],
+            'UF_CRM_65732038DAD70' => $leadData['client_email'],
+            'UF_CRM_PHONE_WORK' => $leadData['client_phone'],
+            'SOURCE_ID' => PF_SOURCE_ID,
+            'ASSIGNED_BY_ID' => $assignedAgentId
         ];
     }
 
-    private function handleCallDetails(array $lead, array &$fields): void
+    private function handleCallDetails(array $lead, array &$fields, string $newLeadId): void
     {
         if (empty($lead['download_url'])) {
             return;
@@ -99,11 +100,10 @@ class LeadProcessor
             'recording_url' => $lead['download_url']
         ];
 
-        $fields['ufCrm43_1738829734288'] = $this->formatCallComments($callDetails);
-        $fields['ufCrm43_1738829734288'] = $lead['status'];
+        $fields['COMMENTS'] = $this->formatCallComments($callDetails);
 
         if ($lead['download_url']) {
-            $this->processCallRecording($lead, $fields);
+            $this->processCallRecording($lead, $fields, $newLeadId);
         }
     }
 
@@ -121,19 +121,19 @@ class LeadProcessor
         ";
     }
 
-    private function processCallRecording(array $lead, array $fields): void
+    private function processCallRecording(array $lead, array $fields, string $newLeadId): void
     {
         $callRecordContent = file_get_contents($lead['download_url']);
 
         $registerCallData = [
             'USER_PHONE_INNER' => $lead['user']['public']['phone'] ?? '',
-            'USER_ID' => $fields['assignedById'],
+            'USER_ID' => $fields['ASSIGNED_BY_ID'],
             'PHONE_NUMBER' => $lead['phone'] ?? '',
             'CALL_START_DATE' => $lead['call_start'],
             'CRM_CREATE' => false,
             'CRM_SOURCE' => 41,
-            'CRM_ENTITY_TYPE' => 'CONTACT',
-            'CRM_ENTITY_ID' => $fields['contactId'],
+            'CRM_ENTITY_TYPE' => 'DEAL',
+            'CRM_ENTITY_ID' => $newLeadId,
             'SHOW' => false,
             'TYPE' => 2,
             'LINE_NUMBER' => 'PF ' . ($lead['user']['public']['phone'] ?? '')
@@ -143,15 +143,15 @@ class LeadProcessor
         $callId = $registerCall['CALL_ID'] ?? null;
 
         if ($callId) {
-            $this->finalizeCallRecording($callId, $fields['assignedById'], $lead, $callRecordContent);
+            $this->finalizeCallRecording($callId, $fields['ASSIGNED_BY_ID'], $lead, $callRecordContent);
         }
     }
 
-    private function finalizeCallRecording(string $callId, int $assignedById, array $lead, string $callRecordContent): void
+    private function finalizeCallRecording(string $callId, int $ASSIGNED_BY_ID, array $lead, string $callRecordContent): void
     {
         finishCall([
             'CALL_ID' => $callId,
-            'USER_ID' => $assignedById,
+            'USER_ID' => $ASSIGNED_BY_ID,
             'DURATION' => $lead['talk_time'],
             'STATUS_CODE' => 200
         ]);
@@ -179,33 +179,34 @@ class LeadProcessor
             // Handle contact creation or lookup
             $existingContact = checkExistingContact(['PHONE' => $leadData['client_phone']]);
             if (!$existingContact) {
-                $contactId = $this->createNewContact($leadData, $fields['assignedById']);
+                $contactId = $this->createNewContact($leadData, $fields['ASSIGNED_BY_ID']);
                 if ($contactId) {
-                    $fields['contactId'] = $contactId;
+                    $fields['CONTACT_ID'] = $contactId;
                 }
             } else {
-                $fields['contactId'] = $existingContact;
+                $fields['CONTACT_ID'] = $existingContact;
             }
+
+            
+            $newLeadId = createBitrixLead($fields);
+            echo "New Lead Created: $newLeadId\n";
 
             // Handle call-specific data
             if ($mode === 'CALL') {
-                $this->handleCallDetails($lead, $fields);
+                $this->handleCallDetails($lead, $fields, $newLeadId);
             }
-
-            $newLeadId = createBitrixLead(ENTITY_TYPE_ID, $fields);
-            echo "New Lead Created: $newLeadId\n";
 
             saveProcessedLead($this->leadFile, $lead['id']);
         }
     }
 
-    private function createNewContact(array $leadData, int $assignedById): ?int
+    private function createNewContact(array $leadData, int $ASSIGNED_BY_ID): ?int
     {
         return createContact([
             'NAME' => $leadData['client_name'],
             'PHONE' => [['VALUE' => $leadData['client_phone'], 'VALUE_TYPE' => 'WORK']],
-            'ASSIGNED_BY_ID' => $assignedById,
-            'CREATED_BY_ID' => $assignedById
+            'ASSIGNED_BY_ID' => $ASSIGNED_BY_ID,
+            'CREATED_BY_ID' => $ASSIGNED_BY_ID
         ]);
     }
 }

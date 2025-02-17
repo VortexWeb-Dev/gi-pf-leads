@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/crest/crest.php';
+define('LISTINGS_ENTITY_TYPE_ID', 1084);
 
 function makeApiRequest(string $url, array $headers)
 {
@@ -86,14 +87,13 @@ function fetchLeads(string $type, string $date, string $authToken)
     }
 }
 
-function createBitrixLead($entityTypeId, $fields)
+function createBitrixLead($fields)
 {
-    $response = CRest::call('crm.item.add', [
-        'entityTypeId' => $entityTypeId,
+    $response = CRest::call('crm.deal.add', [
         'fields' => $fields
     ]);
 
-    return $response['result']['item']['id'];
+    return $response['result'];
 }
 
 function checkExistingContact($filter = [])
@@ -200,6 +200,103 @@ function saveProcessedLead($file, $lead_id)
     }
 }
 
+function getResponsiblePerson(string $searchValue, string $searchType): ?int
+{
+    if ($searchType === 'reference') {
+        $response = CRest::call('crm.item.list', [
+            'entityTypeId' => LISTINGS_ENTITY_TYPE_ID,
+            'filter' => ['ufCrm37ReferenceNumber' => $searchValue],
+            'select' => ['ufCrm37ReferenceNumber', 'ufCrm37AgentEmail', 'ufCrm37ListingOwner', 'ufCrm37OwnerId'],
+        ]);
+
+        if (!empty($response['error'])) {
+            error_log(
+                'Error getting CRM item: ' . $response['error_description']
+            );
+            return null;
+        }
+
+        if (
+            empty($response['result']['items']) ||
+            !is_array($response['result']['items'])
+        ) {
+            error_log(
+                'No listing found with reference number: ' . $searchValue
+            );
+            return null;
+        }
+
+        $listing = $response['result']['items'][0];
+
+        // First check if ufCrm37OwnerId exists and is not empty/null
+        $ownerId = $listing['ufCrm37OwnerId'] ?? null;
+        if ($ownerId && $ownerId !== 'null') {
+            return (int)$ownerId;
+        }
+
+        // If no owner ID, try to find user by owner name
+        $ownerName = $listing['ufCrm37ListingOwner'] ?? null;
+        if ($ownerName) {
+            // Assuming the owner name is the first name
+            $userResponse = CRest::call('user.get', [
+                'filter' => ['NAME' => $ownerName]
+            ]);
+
+            if (
+                !empty($userResponse['result']) &&
+                is_array($userResponse['result']) &&
+                !empty($userResponse['result'][0]['ID'])
+            ) {
+                return (int)$userResponse['result'][0]['ID'];
+            } else {
+                error_log(
+                    'No user found with name: ' . $ownerName
+                );
+            }
+        }
+
+        // If no owner name found, fall back to agent email
+        $agentEmail = $listing['ufCrm37AgentEmail'] ?? null;
+        if ($agentEmail) {
+            return getUserId([
+                'EMAIL' => $agentEmail,
+            ]);
+        } else {
+            error_log(
+                'No agent email found for reference number: ' . $searchValue
+            );
+            return null;
+        }
+    } else if ($searchType === 'phone') {
+        return getUserId([
+            '%PERSONAL_MOBILE' => $searchValue,
+        ]);
+    }
+
+    return null;
+}
+
+function getUserId(array $filter): ?int
+{
+    $response = CRest::call('user.get', [
+        'filter' => $filter,
+    ]);
+
+    if (!empty($response['error'])) {
+        error_log('Error getting user: ' . $response['error_description']);
+        return null;
+    }
+
+    if (empty($response['result'])) {
+        return null;
+    }
+
+    if (empty($response['result'][0]['ID'])) {
+        return null;
+    }
+
+    return (int)$response['result'][0]['ID'];
+}
 
 function determineAgentId($agent_email)
 {
