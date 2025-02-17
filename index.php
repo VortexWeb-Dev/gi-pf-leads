@@ -79,6 +79,7 @@ class LeadProcessor
             'UF_CRM_65732038DAD70' => $leadData['client_email'],
             'UF_CRM_PHONE_WORK' => $leadData['client_phone'],
             'SOURCE_ID' => PF_SOURCE_ID,
+            'CATEGORY_ID' => 24,
             'ASSIGNED_BY_ID' => $assignedAgentId
         ];
     }
@@ -175,18 +176,6 @@ class LeadProcessor
             logData(strtolower($mode) . '-lead.log', print_r($leadData, true));
 
             $fields = $this->prepareLeadFields($leadData, $mode, $collectionSource);
-
-            // Handle contact creation or lookup
-            $existingContact = checkExistingContact(['PHONE' => $leadData['client_phone']]);
-            if (!$existingContact) {
-                $contactId = $this->createNewContact($leadData, $fields['ASSIGNED_BY_ID']);
-                if ($contactId) {
-                    $fields['CONTACT_ID'] = $contactId;
-                }
-            } else {
-                $fields['CONTACT_ID'] = $existingContact;
-            }
-
             
             $newLeadId = createBitrixLead($fields);
             echo "New Lead Created: $newLeadId\n";
@@ -198,16 +187,6 @@ class LeadProcessor
 
             saveProcessedLead($this->leadFile, $lead['id']);
         }
-    }
-
-    private function createNewContact(array $leadData, int $ASSIGNED_BY_ID): ?int
-    {
-        return createContact([
-            'NAME' => $leadData['client_name'],
-            'PHONE' => [['VALUE' => $leadData['client_phone'], 'VALUE_TYPE' => 'WORK']],
-            'ASSIGNED_BY_ID' => $ASSIGNED_BY_ID,
-            'CREATED_BY_ID' => $ASSIGNED_BY_ID
-        ]);
     }
 }
 
