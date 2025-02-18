@@ -263,7 +263,9 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
         }
     } else if ($searchType === 'phone') {
         return getUserId([
-            '%PERSONAL_MOBILE' => $searchValue,
+            '%PERSONAL_MOBILE' => trim($searchValue),
+        ]) || getUserId([
+            '%WORK_PHONE' => trim($searchValue),
         ]);
     }
 

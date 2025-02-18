@@ -42,7 +42,7 @@ class LeadProcessor
     {
         $encodedTimestamp = urlencode($timestamp);
         return [
-            'whatsapp' => fetchLeads('whatsapp-leads', $encodedTimestamp, $this->authToken)['whatsapp'],
+            // 'whatsapp' => fetchLeads('whatsapp-leads', $encodedTimestamp, $this->authToken)['whatsapp'],
             'call' => fetchLeads('calltrackings', $encodedTimestamp, $this->authToken)['call_trackings']
             // 'email' => fetchLeads('leads', $encodedTimestamp, $this->authToken)['leads'],
         ];
@@ -73,7 +73,7 @@ class LeadProcessor
         }
 
         return [
-            'TITLE' => "Property Finder - " . ucfirst(strtolower($mode)) . " - " . $leadData['property_reference'],
+            'TITLE' => "Property Finder - " . ucfirst(strtolower($mode)) . " - " . ($leadData['property_reference'] ?? 'No reference'),
             'UF_CRM_1680511307544' => $leadData['property_reference'],
             'UF_CRM_1701770331658' => $leadData['client_name'],
             'UF_CRM_65732038DAD70' => $leadData['client_email'],
