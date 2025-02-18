@@ -176,6 +176,7 @@ class LeadProcessor
             logData(strtolower($mode) . '-lead.log', print_r($leadData, true));
 
             $fields = $this->prepareLeadFields($leadData, $mode, $collectionSource);
+            logData('fields.log', print_r($fields, true));
             
             $newLeadId = createBitrixLead($fields);
             echo "New Lead Created: $newLeadId\n";

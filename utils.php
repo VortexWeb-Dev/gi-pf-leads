@@ -228,34 +228,28 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
 
         $listing = $response['result']['items'][0];
 
-        // First check if ufCrm37OwnerId exists and is not empty/null
         $ownerId = $listing['ufCrm37OwnerId'] ?? null;
         if ($ownerId && $ownerId !== 'null') {
             return (int)$ownerId;
         }
 
-        // If no owner ID, try to find user by owner name
         $ownerName = $listing['ufCrm37ListingOwner'] ?? null;
-        if ($ownerName) {
-            // Assuming the owner name is the first name
-            $userResponse = CRest::call('user.get', [
-                'filter' => ['NAME' => $ownerName]
-            ]);
 
-            if (
-                !empty($userResponse['result']) &&
-                is_array($userResponse['result']) &&
-                !empty($userResponse['result'][0]['ID'])
-            ) {
-                return (int)$userResponse['result'][0]['ID'];
-            } else {
-                error_log(
-                    'No user found with name: ' . $ownerName
-                );
-            }
+        if ($ownerName) {
+            $nameParts = explode(' ', trim($ownerName));
+
+            $firstName = $nameParts[0] ?? null;
+            $lastName = count($nameParts) > 1 ? array_pop($nameParts) : null;
+            $middleName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : null;
+
+            return getUserId([
+                '%NAME' => $firstName,
+                '%SECOND_NAME' => $middleName,
+                '%LAST_NAME' => $lastName,
+            ]);
         }
 
-        // If no owner name found, fall back to agent email
+
         $agentEmail = $listing['ufCrm37AgentEmail'] ?? null;
         if ($agentEmail) {
             return getUserId([
