@@ -197,6 +197,6 @@ $date = date('Y-m-d');
 var_dump($date);
 $leads = $processor->fetchAllLeads($date);
 
-$processor->processLeads($leads['whatsapp'], 'WHATSAPP', 'PF_WHATSAPP');
+//$processor->processLeads($leads['whatsapp'], 'WHATSAPP', 'PF_WHATSAPP');
 $processor->processLeads($leads['call'], 'CALL', 'PF_CALL');
 // $processor->processLeads($leads['email'], 'EMAIL', 'PF_EMAIL');
