@@ -3,7 +3,9 @@ require_once __DIR__ . '/utils.php';
 
 // Configuration
 const ENTITY_TYPE_ID = 1110;
-const PF_SOURCE_ID = 'UC_PLY23S';
+const PF_CALL_SOURCE_ID = 'UC_L31Q25';
+const PF_EMAIL_SOURCE_ID = 'RC_GENERATOR';
+
 const COLLECTION_SOURCE = [
     'PF_CALL' => '41308',
     'PF_EMAIL' => '41309',
@@ -66,7 +68,7 @@ class LeadProcessor
 
     private function prepareLeadFields(array $leadData, string $mode, string $collectionSource): array
     {
-        if($leadData['property_reference']) {
+        if ($leadData['property_reference']) {
             $assignedAgentId = getResponsiblePerson($leadData['property_reference'], 'reference') ?? 1893;
         } else {
             $assignedAgentId = getResponsiblePerson($leadData['agent_phone'], 'phone') ?? 1893;
@@ -78,7 +80,8 @@ class LeadProcessor
             'UF_CRM_1701770331658' => $leadData['client_name'],
             'UF_CRM_65732038DAD70' => $leadData['client_email'],
             'UF_CRM_PHONE_WORK' => $leadData['client_phone'],
-            'SOURCE_ID' => PF_SOURCE_ID,
+            'UF_CRM_1736406984' => $leadData['agent_phone'],
+            'SOURCE_ID' => $mode === 'CALL' ?  PF_CALL_SOURCE_ID : PF_EMAIL_SOURCE_ID,
             'CATEGORY_ID' => 24,
             'ASSIGNED_BY_ID' => $assignedAgentId
         ];
@@ -177,7 +180,7 @@ class LeadProcessor
 
             $fields = $this->prepareLeadFields($leadData, $mode, $collectionSource);
             logData('fields.log', print_r($fields, true));
-            
+
             $newLeadId = createBitrixLead($fields);
             echo "New Lead Created: $newLeadId\n";
 
