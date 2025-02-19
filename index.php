@@ -69,7 +69,7 @@ class LeadProcessor
         if($leadData['property_reference']) {
             $assignedAgentId = getResponsiblePerson($leadData['property_reference'], 'reference') ?? 1893;
         } else {
-            $assignedAgentId = getResponsiblePerson($leadData['agent_phone'], 'call') ?? 1893;
+            $assignedAgentId = getResponsiblePerson($leadData['agent_phone'], 'phone') ?? 1893;
         }
 
         return [
