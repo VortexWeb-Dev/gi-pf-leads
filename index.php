@@ -79,6 +79,7 @@ class LeadProcessor
             'UF_CRM_1680511307544' => $leadData['property_reference'],
             'UF_CRM_1701770331658' => $leadData['client_name'],
             'UF_CRM_65732038DAD70' => $leadData['client_email'],
+            'UF_CRM_1721198325274' => $leadData['client_email'],
             'UF_CRM_PHONE_WORK' => $leadData['client_phone'],
             'UF_CRM_1736406984' => $leadData['agent_phone'],
             'SOURCE_ID' => $mode === 'CALL' ?  PF_CALL_SOURCE_ID : PF_EMAIL_SOURCE_ID,
