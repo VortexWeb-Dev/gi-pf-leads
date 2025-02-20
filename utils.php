@@ -65,8 +65,11 @@ function logData(string $filename, string $message)
 
 function fetchLeads(string $type, string $date, string $authToken)
 {
-    // $url = "https://www.bayut.com/api-v7/stats/website-client-leads?type=$type&timestamp=$timestamp";
-    $url = "https://api-v2.mycrm.com/$type?filters[date][from]=$date";
+    if ($type == 'calltrackings') {
+        $url = "https://api-v2.mycrm.com/$type?filters[date][from]=$date";
+    } elseif ($type == 'leads') {
+        $url = "https://api-v2.mycrm.com/$type?filters[created][from]=$date&filters[created][to]=$date";
+    }
 
     try {
         $data = makeApiRequest($url, [
@@ -264,6 +267,8 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
     } else if ($searchType === 'phone') {
         return getUserId(['%PERSONAL_MOBILE' => preg_replace('/\s+/', '', $searchValue)])
             ?? getUserId(['%WORK_PHONE' => preg_replace('/\s+/', '', $searchValue)]);
+    } else if ($searchType === 'name') {
+        return getUserId(['%NAME' => explode(' ', $searchValue)[0], '%LAST_NAME' => explode(' ', $searchValue)[1]]);
     }
 
     return null;

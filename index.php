@@ -45,8 +45,8 @@ class LeadProcessor
         $encodedTimestamp = urlencode($timestamp);
         return [
             // 'whatsapp' => fetchLeads('whatsapp-leads', $encodedTimestamp, $this->authToken)['whatsapp'],
-            'call' => fetchLeads('calltrackings', $encodedTimestamp, $this->authToken)['call_trackings']
-            // 'email' => fetchLeads('leads', $encodedTimestamp, $this->authToken)['leads'],
+            'call' => fetchLeads('calltrackings', $encodedTimestamp, $this->authToken)['call_trackings'],
+            'email' => fetchLeads('leads', $encodedTimestamp, $this->authToken)['leads'],
         ];
     }
 
@@ -71,11 +71,11 @@ class LeadProcessor
         if ($leadData['property_reference']) {
             $assignedAgentId = getResponsiblePerson($leadData['property_reference'], 'reference') ?? 1893;
         } else {
-            $assignedAgentId = getResponsiblePerson($leadData['agent_phone'], 'phone') ?? 1893;
+            $assignedAgentId = getResponsiblePerson($leadData['agent_name'], 'name') ?? 1893;
         }
 
         return [
-            'TITLE' => "Property Finder - " . ucfirst(strtolower($mode)) . " - " . ($leadData['property_reference'] ?? 'No reference'),
+            'TITLE' => "Property Finder - " . ucfirst(strtolower($mode)) . " - " . ($leadData['property_reference'] !== '' ? $leadData['property_reference'] : 'No reference'),
             'UF_CRM_1680511307544' => $leadData['property_reference'],
             'UF_CRM_1701770331658' => $leadData['client_name'],
             'UF_CRM_65732038DAD70' => $leadData['client_email'],
@@ -202,4 +202,4 @@ $leads = $processor->fetchAllLeads($date);
 
 //$processor->processLeads($leads['whatsapp'], 'WHATSAPP', 'PF_WHATSAPP');
 $processor->processLeads($leads['call'], 'CALL', 'PF_CALL');
-// $processor->processLeads($leads['email'], 'EMAIL', 'PF_EMAIL');
+$processor->processLeads($leads['email'], 'EMAIL', 'PF_EMAIL');
