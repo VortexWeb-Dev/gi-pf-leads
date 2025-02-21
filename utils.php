@@ -249,6 +249,7 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
                 '%NAME' => $firstName,
                 '%SECOND_NAME' => $middleName,
                 '%LAST_NAME' => $lastName,
+                '!ID' => 3
             ]);
         }
 
@@ -257,6 +258,7 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
         if ($agentEmail) {
             return getUserId([
                 'EMAIL' => $agentEmail,
+                '!ID' => 3
             ]);
         } else {
             error_log(
@@ -265,10 +267,10 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
             return null;
         }
     } else if ($searchType === 'phone') {
-        return getUserId(['%PERSONAL_MOBILE' => preg_replace('/\s+/', '', $searchValue)])
-            ?? getUserId(['%WORK_PHONE' => preg_replace('/\s+/', '', $searchValue)]);
+        return getUserId(['%PERSONAL_MOBILE' => preg_replace('/\s+/', '', $searchValue,), '!ID' => 3])
+            ?? getUserId(['%WORK_PHONE' => preg_replace('/\s+/', '', $searchValue), '!ID' => 3]);
     } else if ($searchType === 'name') {
-        return getUserId(['%NAME' => explode(' ', $searchValue)[0], '%LAST_NAME' => explode(' ', $searchValue)[1]]);
+        return getUserId(['%NAME' => explode(' ', $searchValue)[0], '%LAST_NAME' => explode(' ', $searchValue)[1], '!ID' => 3]);
     }
 
     return null;
