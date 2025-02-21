@@ -53,15 +53,18 @@ class LeadProcessor
     private function extractLeadData(array $lead): array
     {
         $agent = $lead['user']['public'] ?? [];
+        $message = $lead['notes'][0]['body'] ?? '';
+
         return [
             'id' => $lead['id'],
-            'property_reference' => $lead['property_reference'] ?? $lead['reference'] ?? '',
+            'property_reference' => $lead['property_reference'] ?? $this->getLeadReference($message) ?? $lead['reference'] ?? '',
             'agent_name' => trim(($agent['first_name'] ?? '') . ' ' . ($agent['last_name'] ?? '')),
             'agent_phone' => $agent['phone'] ?? '',
             'agent_email' => $agent['email'] ?? '',
             'client_phone' => $lead['phone'] ?? $lead['mobile'] ?? '',
             'client_email' => $lead['email'] ?? '',
             'client_name' => $lead['client_name'] ?? trim(($lead['first_name'] ?? '') . ' ' . ($lead['last_name'] ?? '')) ?? 'Unknown',
+            'message' => $lead['notes'][0]['body'] ?? '',
             'enquiry_datetime' => $lead['created_at'] ?? ''
         ];
     }
@@ -82,6 +85,7 @@ class LeadProcessor
             'UF_CRM_1721198325274' => $leadData['client_email'],
             'UF_CRM_PHONE_WORK' => $leadData['client_phone'],
             'UF_CRM_1736406984' => $leadData['client_phone'],
+            'COMMENTS' => $leadData['message'],
             'SOURCE_ID' => $mode === 'CALL' ?  PF_CALL_SOURCE_ID : PF_EMAIL_SOURCE_ID,
             'CATEGORY_ID' => 24,
             'ASSIGNED_BY_ID' => $assignedAgentId
@@ -192,6 +196,15 @@ class LeadProcessor
 
             saveProcessedLead($this->leadFile, $lead['id']);
         }
+    }
+
+    private function getLeadReference(string $message): ?string
+    {
+        $pattern = '/ref:\s*([a-zA-Z0-9-]+)/';
+        if (preg_match($pattern, $message, $matches)) {
+            return $matches[1];
+        }
+        return null;
     }
 }
 
