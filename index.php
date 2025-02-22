@@ -72,9 +72,9 @@ class LeadProcessor
     private function prepareLeadFields(array $leadData, string $mode, string $collectionSource): array
     {
         if ($leadData['property_reference']) {
-            $assignedAgentId = getResponsiblePerson($leadData['property_reference'], 'reference') ?? 1893;
+            $assignedAgentId = getResponsiblePerson($leadData['property_reference'], 'reference') ?? 1593;
         } else {
-            $assignedAgentId = getResponsiblePerson($leadData['agent_name'], 'name') ?? 1893;
+            $assignedAgentId = getResponsiblePerson($leadData['agent_name'], 'name') ?? 1593;
         }
 
         return [
