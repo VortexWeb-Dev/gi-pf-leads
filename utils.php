@@ -150,7 +150,7 @@ function getListingOwner($property_reference)
 function getUser($filter = [])
 {
     $response = CRest::call('user.get', [
-        'filter' => $filter,
+        'filter' => array_merge($filter, ['ACTIVE' => 'Y']),
         'select' => ['ID', 'NAME', 'EMAIL']
     ]);
 
@@ -278,7 +278,7 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
 function getUserId(array $filter): ?int
 {
     $response = CRest::call('user.get', [
-        'filter' => $filter,
+        'filter' => array_merge($filter, ['ACTIVE' => 'Y']),
     ]);
 
     if (!empty($response['error'])) {
