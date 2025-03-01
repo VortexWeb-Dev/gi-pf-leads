@@ -437,3 +437,14 @@ function shortenUrl($urlToShorten)
         return $response['result_url'];
     }
 }
+
+function getPropertyPrice($propertyReference)
+{
+    $response = CRest::call('crm.item.list', [
+        'entityTypeId' => LISTINGS_ENTITY_TYPE_ID,
+        'filter' => ['ufCrm37ReferenceNumber' => $propertyReference],
+        'select' => ['ufCrm37Price'],
+    ]);
+
+    return $response['result']['items'][0]['ufCrm37Price'] ?? null;
+}
