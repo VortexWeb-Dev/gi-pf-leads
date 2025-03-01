@@ -77,6 +77,22 @@ class LeadProcessor
             $assignedAgentId = getResponsiblePerson($leadData['agent_name'], 'name') ?? 1593;
         }
 
+        $contactId = createContact([
+            'NAME' => $leadData['client_name'],
+            'PHONE' => [
+                [
+                    'VALUE' => $leadData['client_phone'],
+                    'VALUE_TYPE' => 'WORK'
+                ]
+            ],
+            'EMAIL' => [
+                [
+                    'VALUE' => $leadData['client_email'],
+                    'VALUE_TYPE' => 'WORK'
+                ]
+            ]
+        ]);
+
         return [
             'TITLE' => "Property Finder - " . ucfirst(strtolower($mode)) . " - " . ($leadData['property_reference'] !== '' ? $leadData['property_reference'] : 'No reference'),
             'UF_CRM_1739890146108' => $leadData['property_reference'],
@@ -88,7 +104,8 @@ class LeadProcessor
             'COMMENTS' => $leadData['message'],
             'SOURCE_ID' => $mode === 'CALL' ?  PF_CALL_SOURCE_ID : PF_EMAIL_SOURCE_ID,
             'CATEGORY_ID' => 24,
-            'ASSIGNED_BY_ID' => $assignedAgentId
+            'ASSIGNED_BY_ID' => $assignedAgentId,
+            'CONTACT_ID' => $contactId,
         ];
     }
 
