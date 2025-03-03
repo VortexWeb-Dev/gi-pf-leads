@@ -106,7 +106,7 @@ class LeadProcessor
             'CATEGORY_ID' => 24,
             'ASSIGNED_BY_ID' => $assignedAgentId,
             'CONTACT_ID' => $contactId,
-            'UF_CRM_1598274004881' => getPropertyPrice($leadData['property_reference']) ?? '',
+            'OPPORTUNITY' => getPropertyPrice($leadData['property_reference']) ?? '',
         ];
     }
 
