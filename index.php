@@ -76,9 +76,10 @@ class LeadProcessor
         } else {
             $assignedAgentId = getResponsiblePerson($leadData['agent_name'], 'name') ?? 1593;
         }
+        $title = "Property Finder - " . ucfirst(strtolower($mode)) . " - " . ($leadData['property_reference'] !== '' ? $leadData['property_reference'] : 'No reference');
 
         $contactId = createContact([
-            'NAME' => $leadData['client_name'] ?? "Unknown from Property Finder " . ucfirst(strtolower($mode)) . " (" . $leadData['client_phone'] . ")",
+            'NAME' => $leadData['client_name'] ?? $title,
             'PHONE' => [
                 [
                     'VALUE' => $leadData['client_phone'],
@@ -94,7 +95,7 @@ class LeadProcessor
         ]);
 
         return [
-            'TITLE' => "Property Finder - " . ucfirst(strtolower($mode)) . " - " . ($leadData['property_reference'] !== '' ? $leadData['property_reference'] : 'No reference'),
+            'TITLE' => $title,
             'UF_CRM_1739890146108' => $leadData['property_reference'],
             'UF_CRM_1701770331658' => $leadData['client_name'],
             'UF_CRM_65732038DAD70' => $leadData['client_email'],
