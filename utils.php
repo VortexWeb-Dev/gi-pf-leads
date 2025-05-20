@@ -239,25 +239,29 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
         $ownerName = $listing['ufCrm37ListingOwner'] ?? null;
 
         if ($ownerName) {
-            $nameParts = explode(' ', trim($ownerName), 2);
+            $nameParts = explode(' ', trim($ownerName));
+            $combinations = [];
 
-            $firstName = $nameParts[0] ?? null;
-            $lastName = $nameParts[1] ?? null;
+            for ($i = 1; $i < count($nameParts); $i++) {
+                $first = implode(' ', array_slice($nameParts, 0, $i));
+                $last = implode(' ', array_slice($nameParts, $i));
+                $combinations[] = ['%NAME' => $first, '%LAST_NAME' => $last];
+            }
+
+            foreach ($combinations as $filter) {
+                $user = getUserId($filter);
+                if ($user) return $user;
+            }
 
             return getUserId([
-                '%NAME' => $firstName,
-                '%LAST_NAME' => $lastName,
-                '!ID' => [3, 268]
+                '%FIND' => $ownerName,
             ]);
         }
-
 
         $agentEmail = $listing['ufCrm37AgentEmail'] ?? null;
         if ($agentEmail) {
             return getUserId([
                 'EMAIL' => $agentEmail,
-                '!ID' => 3,
-                '!ID' => 268
             ]);
         } else {
             error_log(
@@ -266,10 +270,10 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
             return null;
         }
     } else if ($searchType === 'phone') {
-        return getUserId(['%PERSONAL_MOBILE' => preg_replace('/\s+/', '', $searchValue,), '!ID' => 3, '!ID' => 268])
-            ?? getUserId(['%WORK_PHONE' => preg_replace('/\s+/', '', $searchValue), '!ID' => 3, '!ID' => 268]);
+        return getUserId(['%PERSONAL_MOBILE' => preg_replace('/\s+/', '', $searchValue,)])
+            ?? getUserId(['%WORK_PHONE' => preg_replace('/\s+/', '', $searchValue)]);
     } else if ($searchType === 'name') {
-        return getUserId(['%NAME' => explode(' ', $searchValue)[0], '%LAST_NAME' => explode(' ', $searchValue)[1], '!ID' => 3, '!ID' => 268]);
+        return getUserId(['%NAME' => explode(' ', $searchValue)[0], '%LAST_NAME' => explode(' ', $searchValue)[1]]);
     }
 
     return null;
@@ -278,7 +282,7 @@ function getResponsiblePerson(string $searchValue, string $searchType): ?int
 function getUserId(array $filter): ?int
 {
     $response = CRest::call('user.get', [
-        'filter' => array_merge($filter, ['ACTIVE' => 'Y']),
+        'filter' => array_merge($filter, ['ACTIVE' => 'Y', '!ID' => [3, 268, 1945]]),
     ]);
 
     if (!empty($response['error'])) {
